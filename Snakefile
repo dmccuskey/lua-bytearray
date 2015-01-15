@@ -10,21 +10,19 @@ module_config = {
 	"name": "lua-bytearray",
 	"module": {
 		"files": [
-				"lua_bytearray.lua",
-				"lua_bytearray/exceptions.lua",
-				"lua_bytearray/pack_bytearray.lua"
+			"lua_bytearray.lua",
+			"lua_bytearray/exceptions.lua",
+			"lua_bytearray/pack_bytearray.lua"
 		],
 		"requires": [
-				"lua-error",
-				"lua-objects"
+			"lua-error",
+			"lua-objects"
 		]
 	},
 	"tests": {
 		"files": [
 		],
 		"requires": [
-			"lua-error",
-			"lua-objects"
 		]
 	}
 }
