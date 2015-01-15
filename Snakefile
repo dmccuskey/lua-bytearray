@@ -1,9 +1,33 @@
-# lua-promise
+# lua-bytearray
 
-# library module dependancies
-LIBS = "lua_error lua_objects".split()
+try:
+	if not gSTARTED: print( gSTARTED )
+except:
+	MODULE = "lua-bytearray"
+	include: "../DMC-Lua-Library/snakemake/Snakefile"
 
-include: "../DMC-Lua-Library/snakemake/Snakefile"
+module_config = {
+	"name": "lua-bytearray",
+	"module": {
+		"files": [
+				"lua_bytearray.lua",
+				"lua_bytearray/exceptions.lua",
+				"lua_bytearray/pack_bytearray.lua"
+		],
+		"requires": [
+				"lua-error",
+				"lua-objects"
+		]
+	},
+	"tests": {
+		"files": [
+		],
+		"requires": [
+			"lua-error",
+			"lua-objects"
+		]
+	}
+}
 
-
+register( "lua-bytearray", module_config )
 
