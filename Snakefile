@@ -9,6 +9,7 @@ except:
 module_config = {
 	"name": "lua-bytearray",
 	"module": {
+		"dir": "dmc_lua",
 		"files": [
 			"lua_bytearray.lua",
 			"lua_bytearray/exceptions.lua",
@@ -20,10 +21,9 @@ module_config = {
 		]
 	},
 	"tests": {
-		"files": [
-		],
-		"requires": [
-		]
+		"dir": "spec",
+		"files": [],
+		"requires": []
 	}
 }
 
