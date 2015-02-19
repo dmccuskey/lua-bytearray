@@ -382,6 +382,7 @@ local function blessObject( inheritance, params )
 
 	-- add Class property, access via getters:supers()
 	o.__parents = inheritance
+	o.__is_dmc = true
 
 	-- create lookup tables - setters, getters
 	o.__setters = {}
@@ -522,7 +523,6 @@ end
 
 
 function ClassBase:isa( the_class )
-
 	local isa = false
 	local cur_class = self.class
 
@@ -534,7 +534,7 @@ function ClassBase:isa( the_class )
 	else
 		local parents = self.__parents
 		for i=1, #parents do
-			local parent, isa = parents[i], false
+			local parent = parents[i]
 			if parent.isa then
 				isa = parent:isa( the_class )
 			end
