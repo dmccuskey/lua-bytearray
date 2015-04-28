@@ -16,8 +16,8 @@ module_config = {
 			"lua_bytearray/pack_bytearray.lua"
 		],
 		"requires": [
+			"lua-class",
 			"lua-error",
-			"lua-objects"
 		]
 	},
 	"tests": {
