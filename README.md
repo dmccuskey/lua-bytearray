@@ -109,7 +109,7 @@ A byte array is a Lua string and a read position. Writes build a new string: app
 
 ### The Module
 
-`require 'lua_bytearray'` returns the `ByteArray` class, a lua-class class: create with `ByteArray:new( params )`, remove with `:destroy()`. `params.endian` sets `endian`.
+`require 'lua_bytearray'` returns the `ByteArray` class, a lua-class class: create with `ByteArray:new( params )`, remove with `:destroy()`. `params.endian` sets `endian`. `ByteArray.__version` is the module's version, `'0.5.0'` (also `ba.version`).
 
 `require 'lua_bytearray.exceptions'` returns `{ BufferError=... }`, the error class for reads past the end (a [lua-error](https://github.com/dmccuskey/lua-error) `Error`: `err.message`, `err:isa( BufferError )`). Other misuse, such as a wrong argument type or an index out of range, fails an `assert()` with a plain string.
 
@@ -128,16 +128,16 @@ A byte array is a Lua string and a read position. Writes build a new string: app
 |---|---|
 | `writeBuf( bytes, index )` | Appends the string `bytes`, or with `index` writes it over the bytes from `index` on. Returns the array. Alias `writeUTFBytes`. |
 | `readBuf( len )` | Returns the next `len` bytes as a string. Alias `readUTFBytes`. |
-| `writeByte( n )` / `readByte()` | One byte as a number, 0-255. `writeByte()` returns nothing. |
+| `writeByte( n )` / `readByte()` | One byte as a number, 0-255. |
 | `writeChar( c )` / `readChar()` | One byte as a one-character string. `writeChar()` appends any string. |
 | `writeBoolean( b )` / `readBoolean()` | One byte, `1` or `0`; any non-zero byte reads as `true`. |
-| `writeBytes( ba, offset, length )` | Reads `length` bytes from array `ba` (from its position, moving it; default: all it has left) and writes them into this array at `offset` (default `1`). |
-| `readBytes( ba, offset, length )` | Reads `length` bytes from this array and writes them into `ba` at `offset` (default `1`). See Known Issues for the default length. |
+| `writeBytes( ba, offset, length )` | Reads `length` bytes from array `ba` (from its position, moving it; default: all it has left) and writes them into this array at `offset` (default: appended at the end). Returns this array. |
+| `readBytes( ba, offset, length )` | Reads `length` bytes from this array (from its position, moving it; default: all it has left) and writes them into `ba` at `offset` (default: appended at its end). Returns this array. |
 | `search( pattern )` | `string.find()` on the whole buffer: returns the start and end index of the first match, or `nil`. A Lua pattern, not a plain string. |
 | `toString()` | The whole buffer, whatever the position. |
 | `toHex()` | Prints a hex dump of the buffer (16 bytes a line, with offsets and the characters); returns nothing. |
 
-Every read raises a `BufferError` when fewer bytes are available than it needs.
+Every write returns the array, so writes chain: `ba:writeByte( 1 ):writeBuf( "x" )`. Every read raises a `BufferError` when fewer bytes are available than it needs.
 
 `ByteArray.getBytes( str, index, length )` and `ByteArray.putBytes( str, bytes, index )` are the string functions behind them: `getBytes()` returns part of `str`, `putBytes()` returns `str` with `bytes` appended or written over it at `index`.
 
@@ -150,9 +150,9 @@ Each `write...()` appends and returns the array; each `read...()` returns the va
 | `writeShort()` / `readShort()` | 2, signed |
 | `writeUnsignedShort()` / `readUnsignedShort()`, aliases `writeUShort()` / `readUShort()` | 2, unsigned |
 | `writeInt()` / `readInt()` | 4, signed |
-| `readUnsignedInt()`, alias `readUInt()` | 4, unsigned; no working write (see Known Issues) |
-| `writeLong()` / `readLong()` | C `long`: 8 on 64-bit desktops, 4 on 32-bit |
-| `writeUnsignedLong()` / `readUnsignedLong()`, aliases `...ULong()` | broken (see Known Issues) |
+| `writeUnsignedInt()` / `readUnsignedInt()`, aliases `writeUInt()` / `readUInt()` | 4, unsigned |
+| `writeLong()` / `readLong()` | C `long`: 8 on 64-bit desktops, 4 on 32-bit (see Known Issues) |
+| `writeUnsignedLong()` / `readUnsignedLong()`, aliases `...ULong()` | C `unsigned long`, as `long` |
 | `writeFloat()` / `readFloat()` | 4 |
 | `writeDouble()` / `readDouble()` | 8 |
 | `writeUnsignedByte()` / `readUnsignedByte()`, aliases `...UByte()` | 1, 0-255 |
@@ -169,21 +169,15 @@ Solar2D doesn't include lpack (it isn't in Solar2D's source), so there the array
 
 ## Known Issues
 
-- **`writeUInt()` and `writeUnsignedInt()` are `nil`**: the file defines `writeUInt()`, then sets it to the alias of a `writeUnsignedInt()` it never defines.
-- **Unsigned longs don't round-trip**: `writeUnsignedLong()` writes a native C `unsigned long` (8 bytes on 64-bit), and `readUnsignedLong()` reads 4 bytes with that format, so it returns `nil` and leaves the position in the middle of the value.
-- **`readBytes()`'s default length is the destination's `bytesAvailable`**, not this array's: `src:readBytes( dst )` into an empty `dst` copies nothing.
-- **`readBytes()` and `writeBytes()` overwrite from index 1 by default**: into an array that has data, they replace its start instead of appending. Pass `offset = length + 1` to append.
 - `search()` takes a Lua pattern (`'.'` matches any byte) and searches the whole buffer, not from the position.
 - Every write copies the whole buffer (strings are immutable), and read bytes are never dropped: many small writes into a large array are slow.
-- `writeByte()` returns nothing, so it can't be chained; the other writes return the array.
 - lpack is loaded silently: without it the typed methods and the `ENDIAN_*` constants are just missing, and any `pack.lua` on `package.path` is loaded in its place. `writeLong()`/`readLong()` use the platform's C `long` size, so data written on a 64-bit machine doesn't read back on a 32-bit one.
-- The version, `0.4.0`, isn't exported: it's a local in the file. The modules rely on lua-class's global `newClass()`.
 
 ## Development
 
 Only `dmc_lua/lua_bytearray.lua` and `dmc_lua/lua_bytearray/` are written here. [DMC-Lua-Library](https://github.com/dmccuskey/DMC-Lua-Library) copies them into its `dmc_lua/` with its Snakemake build (the `Snakefile` here registers them and requires lua-class and lua-error), and the DMC Solar2D libraries copy them from there into `dmc_corona/lib/dmc_lua/`. `dmc_lua/lua_class.lua` and `dmc_lua/lua_error.lua` are copies from [lua-class](https://github.com/dmccuskey/lua-class) and [lua-error](https://github.com/dmccuskey/lua-error), and `spec/lib/dmc_lua/` holds copies of lua-files and a JSON shim for the tests; fix them there.
 
-The tests are in `spec/`, for [busted](https://lunarmodules.github.io/busted/) under Lua 5.1. `spec/lua_pack_bytearray_spec.lua` needs lpack (and reads `spec/bin/s-goog.bin`); without it, its 5 tests that read typed values error. From the repository's root folder:
+The tests are in `spec/`, for [busted](https://lunarmodules.github.io/busted/) under Lua 5.1. `spec/lua_pack_bytearray_spec.lua` needs lpack (and reads `spec/bin/s-goog.bin`); without it, its 8 tests of typed values error. From the repository's root folder:
 
 ```sh
 busted spec
@@ -192,10 +186,10 @@ busted spec
 It ends with:
 
 ```text
-39 successes / 0 failures / 0 errors / 0 pending : 0.013644 seconds
+46 successes / 0 failures / 0 errors / 0 pending : 0.012434 seconds
 ```
 
-The tests cover `getBytes()`/`putBytes()`, the byte, string and boolean methods, `readBytes()`, `search()`, and reading a binary file with the typed methods; not most typed writes, the byte orders, or `writeBytes()`.
+The tests cover `getBytes()`/`putBytes()`, the byte, string and boolean methods, `readBytes()`/`writeBytes()`, `search()`, reading a binary file with the typed methods, and a write-then-read of each typed method in each byte order; not `toHex()`.
 
 ## License
 
