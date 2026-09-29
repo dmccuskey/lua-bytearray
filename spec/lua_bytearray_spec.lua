@@ -111,6 +111,11 @@ describe( "Module Test: lua_bytearray.lua", function()
 			assert.is.equal( ba.position, 1 )
 		end)
 
+		it( "has the module version", function()
+			assert.is.equal( type( ByteArray.__version ), 'string' )
+			assert.is.equal( ba.version, ByteArray.__version )
+		end)
+
 		it( "has error when position greater than position", function()
 			assert.has.errors( function() ba.position = ba.length + 2 end )
 			assert.has.errors( function() ba.position = 0 end )
@@ -144,6 +149,20 @@ describe( "Module Test: lua_bytearray.lua", function()
 
 			assert.has.errors( function() ba:readBoolean() end )
 
+		end)
+
+	end)
+
+
+	describe("Test: read/writeByte", function()
+
+		it( "writes bytes, chains", function()
+			local ba = ByteArray()
+
+			assert.is.equal( ba:writeByte( 0 ):writeByte( 255 ), ba )
+			assert.is.equal( ba:readByte(), 0 )
+			assert.is.equal( ba:readByte(), 255 )
+			assert.has.errors( function() ba:writeByte( 256 ) end )
 		end)
 
 	end)
@@ -266,7 +285,7 @@ describe( "Module Test: lua_bytearray.lua", function()
 			assert.has.errors( function() ba:readBytes( "hello" ) end )
 		end)
 
-		it( "no changes with empty byte array", function()
+		it( "reads all that's left into an empty byte array", function()
 			local ba2 = ByteArray()
 
 			ba:writeBuf( "helloworld" )
@@ -274,14 +293,49 @@ describe( "Module Test: lua_bytearray.lua", function()
 			assert.is.equal( ba.bytesAvailable, 10 )
 			assert.is.equal( ba.position, 1 )
 
-			ba:readBytes( ba2 )
+			assert.is.equal( ba:readBytes( ba2 ), ba )
 			assert.is.equal( ba.length, 10 )
-			assert.is.equal( ba.bytesAvailable, 10 )
-			assert.is.equal( ba.position, 1 )
+			assert.is.equal( ba.bytesAvailable, 0 )
+			assert.is.equal( ba.position, 11 )
+			assert.is.equal( ba2:toString(), "helloworld" )
+			assert.is.equal( ba2.position, 1 )
 		end)
 
+		it( "appends to a byte array with data", function()
+			local ba2 = ByteArray()
 
-		it( "adds to length, doesn't move position", function()
+			ba:writeBuf( "helloworld" )
+			ba:readBuf( 5 )
+			ba2:writeBuf( "AB" )
+
+			ba:readBytes( ba2 )
+			assert.is.equal( ba2:toString(), "ABworld" )
+			assert.is.equal( ba.bytesAvailable, 0 )
+		end)
+
+		it( "writes at an offset, reads a length", function()
+			local ba2 = ByteArray()
+
+			ba:writeBuf( "hello" )
+			ba2:writeBuf( "world" )
+
+			ba:readBytes( ba2, 2, 3 )
+			assert.is.equal( ba2:toString(), "wheld" )
+			assert.is.equal( ba.position, 4 )
+		end)
+
+	end)
+
+
+	describe("Test: writeBytes", function()
+
+		local ba
+
+		before_each( function()
+			ba = ByteArray()
+		end)
+
+		it( "appends, doesn't move position", function()
 			local ba2 = ByteArray()
 
 			ba:writeBuf( "hello" )
@@ -291,12 +345,13 @@ describe( "Module Test: lua_bytearray.lua", function()
 			assert.is.equal( ba.bytesAvailable, 5 )
 			assert.is.equal( ba.position, 1 )
 
-			ba:writeBytes( ba2 )
-			assert.is.equal( ba.length, 5 )
-			assert.is.equal( ba.bytesAvailable, 5 )
+			assert.is.equal( ba:writeBytes( ba2 ), ba )
+			assert.is.equal( ba.length, 10 )
+			assert.is.equal( ba.bytesAvailable, 10 )
 			assert.is.equal( ba.position, 1 )
+			assert.is.equal( ba2.bytesAvailable, 0 )
 
-			assert.is.equal( ba:readBuf( ba.length ), "world" )
+			assert.is.equal( ba:readBuf( ba.length ), "helloworld" )
 		end)
 
 

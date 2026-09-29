@@ -224,6 +224,35 @@ describe( "Module Test: lua_bytearray.lua", function()
 	end)
 
 
+
+	describe( "typed values round-trip", function()
+
+		local function roundTrip( endian )
+			local ba = ByteArray:new{ endian=endian }
+			ba:writeUInt( 4000000000 ):writeUnsignedInt( 7 )
+			ba:writeULong( 2^40 ):writeLong( -5 )
+			ba:writeShort( -2 ):writeUShort( 65535 ):writeUByte( 200 )
+			ba:writeFloat( 0.5 ):writeDouble( -1.25 ):writeStringUShort( "hi" )
+
+			assert.is.equal( ba:readUInt(), 4000000000 )
+			assert.is.equal( ba:readUnsignedInt(), 7 )
+			assert.is.equal( ba:readULong(), 2^40 )
+			assert.is.equal( ba:readLong(), -5 )
+			assert.is.equal( ba:readShort(), -2 )
+			assert.is.equal( ba:readUShort(), 65535 )
+			assert.is.equal( ba:readUByte(), 200 )
+			assert.is.equal( ba:readFloat(), 0.5 )
+			assert.is.equal( ba:readDouble(), -1.25 )
+			assert.is.equal( ba:readStringUShort(), "hi" )
+			assert.is.equal( ba.bytesAvailable, 0 )
+		end
+
+		it( "big endian", function() roundTrip( ByteArray.ENDIAN_BIG ) end)
+		it( "little endian", function() roundTrip( ByteArray.ENDIAN_LITTLE ) end)
+		it( "native", function() roundTrip( nil ) end)
+
+	end)
+
 end)
 
 
