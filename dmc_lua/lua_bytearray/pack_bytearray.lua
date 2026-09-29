@@ -1,7 +1,7 @@
 --====================================================================--
 -- dmc_lua/lua_bytearray/pack_bytearray.lua
 --
--- Documentation: http://docs.davidmccuskey.com/
+-- Documentation: https://github.com/dmccuskey/lua-bytearray
 --====================================================================--
 
 --[[

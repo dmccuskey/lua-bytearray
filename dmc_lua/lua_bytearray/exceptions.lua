@@ -1,7 +1,7 @@
 --====================================================================--
 -- dmc_lua/lua_bytearray/exceptions.lua
 --
--- Documentation: http://docs.davidmccuskey.com/
+-- Documentation: https://github.com/dmccuskey/lua-bytearray
 --====================================================================--
 
 --[[
